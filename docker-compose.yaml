@@ -1,0 +1,79 @@
+networks:
+  realtime-net:
+    driver: bridge
+
+services:
+  # ----------------------------
+  # Conductor Server
+  # ----------------------------
+  conductor-server:
+    image: conductoross/conductor-standalone:3.15.0
+    container_name: conductor-server-realtime
+    environment: 
+      - DB=memory
+      - conductor.event-queues.kafka.enabled=false  # No Kafka for realtime
+      - conductor.default-event-queue.type=inmemory
+      - conductor.event-processor.enabled=false
+    ports:
+      - "8080:8080"  # Conductor UI/API
+    networks:
+      - realtime-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ----------------------------
+  # Ingestion API
+  # ----------------------------
+  ingestion-api:
+    build: ./ingestion_api
+    container_name: ingestion-api-realtime
+    ports:
+      - "8000:8000"
+    environment:
+      - CONDUCTOR_SERVER=http://conductor-server:8080/api
+    networks:
+      - realtime-net
+    restart: unless-stopped
+    depends_on:
+      - conductor-server
+
+  # ----------------------------
+  # Email Hygiene Service
+  # ----------------------------
+  email-hygiene:
+    build: ./services/email_hygiene
+    container_name: email-hygiene-realtime
+    ports:
+      - "9001:9000"
+    networks:
+      - realtime-net
+    restart: unless-stopped
+
+  # ----------------------------
+  # NameParse Service
+  # ----------------------------
+  nameparse:
+    build: ./services/nameparse
+    container_name: nameparse-realtime
+    ports:
+      - "9002:9000"
+    networks:
+      - realtime-net
+    restart: unless-stopped
+
+  # ----------------------------
+  # Reverse Email Service
+  # ----------------------------
+  reverse-email:
+    build: ./services/reverse_email
+    container_name: reverse-email-realtime
+    ports:
+      - "9003:9000"
+    networks:
+      - realtime-net
+    restart: unless-stopped
