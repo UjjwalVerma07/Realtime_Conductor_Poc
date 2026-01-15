@@ -2,3 +2,6 @@ fastapi==0.111.1
 uvicorn[standard]==0.23.2
 pydantic==2.6.0
 requests==2.32.0
+minio==7.1.17
+boto3==1.29.7
+pandas==2.2.2

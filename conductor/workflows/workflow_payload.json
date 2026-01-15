@@ -1,0 +1,5 @@
+{
+  "workflowName": "dynamic_email_nameparse_workflow",
+  "workflowVersion": 6,
+  "csvMinioUri": "minio://test-ingestion/sample_contacts.csv"
+}

@@ -2,6 +2,9 @@ networks:
   realtime-net:
     driver: bridge
 
+volumes:
+  minio_data:
+
 services:
   # ----------------------------
   # Conductor Server
@@ -26,6 +29,28 @@ services:
       retries: 5
       start_period: 30s
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio-event
+    ports:
+      - "9000:9000"      # API port
+      - "9005:9001"      # Console port
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 60s
+    networks:
+      - realtime-net
+
   # ----------------------------
   # Ingestion API
   # ----------------------------
@@ -36,6 +61,10 @@ services:
       - "8000:8000"
     environment:
       - CONDUCTOR_SERVER=http://conductor-server:8080/api
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+
     networks:
       - realtime-net
     restart: unless-stopped
