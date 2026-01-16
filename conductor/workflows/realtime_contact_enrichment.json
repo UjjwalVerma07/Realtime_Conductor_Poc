@@ -1,7 +1,7 @@
 {
   "name": "dynamic_email_nameparse_workflow",
   "description": "Workflow to run dynamic services on canonical records",
-  "version": 6,
+  "version": 9,
   "inputParameters": [
     "canonical_records",
     "jobId",
@@ -24,7 +24,7 @@
               "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
               "jobId": "${workflow.input.jobId}"
             },
-            "request": "${workflow.input.column_map.email}"
+            "request": "${workflow.input.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"
@@ -49,7 +49,7 @@
               "jobId": "${workflow.input.jobId}",
               "systemId": "workbench"
             },
-            "request": "${workflow.input.column_map.name}"
+            "request": "${workflow.input.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"
