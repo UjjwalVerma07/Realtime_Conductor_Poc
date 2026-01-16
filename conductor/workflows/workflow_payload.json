@@ -1,5 +1,12 @@
 {
   "workflowName": "dynamic_email_nameparse_workflow",
-  "workflowVersion": 9,
-  "csvMinioUri": "minio://test-ingestion/sample_contacts.csv"
+  "workflowVersion": 13,
+  "csvMinioUri": "minio://test-ingestion/sample_contacts.csv",
+  "workflowInput": {
+    "nameparse_config": {
+      "nameType": "M",
+      "nameOrder": "first-name-first",
+      "delimiter": ","
+    }
+  }
 }

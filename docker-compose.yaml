@@ -19,6 +19,7 @@ services:
       - conductor.event-processor.enabled=false
     ports:
       - "8080:8080"  # Conductor UI/API
+      - "5000:5000"
     networks:
       - realtime-net
     restart: unless-stopped

@@ -1,7 +1,7 @@
 {
   "name": "dynamic_email_nameparse_workflow",
   "description": "Workflow to run dynamic services on canonical records",
-  "version": 13,
+  "version": 6,
   "inputParameters": [
     "canonical_records",
     "jobId",
@@ -9,38 +9,13 @@
   ],
   "tasks": [
     {
-      "name": "email_hygiene_task",
-      "taskReferenceName": "email_hygiene",
-      "type": "HTTP",
-      "startDelay": 0,
-      "retryCount": 3,
-      "retryDelaySeconds": 2,
-      "timeoutSeconds": 10,
-      "inputParameters": {
-        "http_request": {
-          "uri": "http://email-hygiene-realtime:9000/process",
-          "method": "POST",
-          "body": {
-            "header": {
-              "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
-              "jobId": "${workflow.input.jobId}"
-            },
-            "request": "${workflow.input.canonical_records}"
-          },
-          "headers": {
-            "Content-Type": "application/json"
-          }
-        }
-      }
-    },
-    {
       "name": "nameparse_task",
       "taskReferenceName": "nameparse",
       "type": "HTTP",
       "startDelay": 0,
       "retryCount": 3,
       "retryDelaySeconds": 2,
-      "timeoutSeconds": 10,
+      "timeoutSeconds": 30,
       "inputParameters": {
         "http_request": {
           "uri": "http://nameparse-realtime:9000/process",
@@ -53,6 +28,31 @@
             },
             "request": "${workflow.input.canonical_records}",
             "config":"${workflow.input.nameparse_config}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    },
+     {
+      "name": "email_hygiene_task",
+      "taskReferenceName": "email_hygiene",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 30,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://email-hygiene-realtime:9000/process",
+          "method": "POST",
+          "body": {
+            "header": {
+              "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
+              "jobId": "${workflow.input.jobId}"
+            },
+            "request": "${workflow.input.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"

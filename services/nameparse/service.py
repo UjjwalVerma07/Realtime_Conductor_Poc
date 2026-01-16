@@ -4,6 +4,7 @@ from typing import List,Dict,Any,Union
 import requests
 import logging
 import time
+import json
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(levelname)s - %(message)s")
@@ -20,57 +21,98 @@ class Header(BaseModel):
     jobId:str
     systemId:str
 
-class RequestData(BaseModel):
-    name:str
+class NameParseConfig(BaseModel):
     nameType:str="M"
     nameOrder:str="first-name-first"
     delimiter:str=","
 
 class NameParseInput(BaseModel):
     header:Header
-    request:Union[RequestData,List[RequestData]]
+    request:Union[Dict[str, Any], List[Dict[str, Any]]]
+    config:NameParseConfig=None
 
 
 @service.post("/process")
 def process_nameparse(data:NameParseInput,request:Request):
     logger.info(f"Received request from {request.client.host}:{data.json()}")
-    payload=data.dict()
+    records=data.request
+    config=data.config.dict() if data.config else {}
+    is_single=isinstance(records,dict)
+    canonical_records=[records] if is_single else records
 
-    attempt=0
-    if isinstance(data.request,RequestData):
-        payload["request"]=data.request.dict()
-    else:
-        payload["requests"]=[r.dict() for r in data.request]
-    while(attempt<MAX_RETRIES):
+    requests_payload=[]
+
+    for rec in canonical_records:
         try:
-            attempt+=1
-            logger.info(f"Calling external API: {EXTERNAL_API_URL} with payload :{payload}")
-            response=requests.post(EXTERNAL_API_URL,json=payload,timeout=TIMEOUT)
-            
-            if response.status_code==429:
-                logger.warning(f"Rate limited by external API (429), Retry {attempt} after {RETRY_DELAY} seconds")
-                if attempt<MAX_RETRIES:
-                    time.sleep(RETRY_DELAY)
-                    continue
-                else:
-                    raise HTTPException(status_code=429, detail="Rate limited by external API")
-            
-            if response.status_code!=200:
-                logger.error(f"External API returned {response.status_code}: {response.text}")
-                raise HTTPException(status_code=response.status_code,detail=response.text)
-        
-            logger.info(f"Received response from external API: {response.json()}")
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"RequestException on attempt {attempt}: {e}")
-            if attempt < MAX_RETRIES:
-                logger.info(f"Retrying in {RETRY_DELAY} seconds...")
-                time.sleep(RETRY_DELAY)
-            else:
-                logger.error(f"Max retries reached. Failing the request")
-                raise HTTPException(status_code=500, detail=f"External API request failed after {MAX_RETRIES} retries: {e}")
+            name_record={"name":rec["input"]["name"]}
+            name_record.update(config)
+            requests_payload.append(name_record)
+        except KeyError:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid canonical record :name missing"
+            )
     
+    external_payload=None
+    if is_single:
+        external_payload={
+            "header":data.header.dict(),
+            "request":requests_payload[0]
+        }
+    else:
+        external_payload={
+            "header":data.header.dict(),
+            "requests":requests_payload
+        }
+    
+    logger.info(f"Calling external API with payload :{external_payload}")
 
+    for attempt in range(1,MAX_RETRIES+1):
+        try:
+            response=requests.post(
+                EXTERNAL_API_URL,
+                json=external_payload,
+                timeout=TIMEOUT
+            )
+            response.raise_for_status()
+            api_response=response.json()
+            logger.info(f"Received response from external API: {json.dumps(api_response,indent=4)}")
+            break
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Attempt {attempt} failed : {e}")
+            if attempt==MAX_RETRIES:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"External API request failed after {MAX_RETRIES} attempts: {str(e)}"
+                )
+            time.sleep(RETRY_DELAY)
+        
 
+    api_results=[api_response] if is_single else api_response
 
+    if len(api_results)!=len(canonical_records):
+        raise HTTPException(
+                status_code=500,
+                detail="External API response does not match request"
+            )
+        
+    for rec,result in zip(canonical_records,api_results):
+        rec.setdefault("services",{})
+        rec["services"]["nameparse"]={
+                "status":"SUCCESS",
+                "name":result.get("name"),
+                "nameType":result.get("nameType"),
+                "nameOrder":result.get("nameOrder"),
+                "delimiter":result.get("delimiter"),
+                "output":result.get("output"),
+                "appendage":result.get("appendage")
+            }
+
+        rec.setdefault("meta",{})
+        rec["meta"]["status"]="NAMEPARSE_COMPLETED"
+        
+    logger.info(f"Enriched canonical records:{json.dumps(canonical_records,indent=4)}")
+    return canonical_records[0] if is_single else canonical_records
+
+    
 
