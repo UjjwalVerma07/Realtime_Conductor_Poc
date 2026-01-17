@@ -1,7 +1,7 @@
 {
   "name": "dynamic_email_nameparse_workflow",
   "description": "Workflow to run dynamic services on canonical records",
-  "version": 17,
+  "version": 18,
   "inputParameters": [
     "canonical_records",
     "jobId",
@@ -59,7 +59,7 @@
               "jobId": "${workflow.input.jobId}",
               "systemId": "workbench"
             },
-            "request": "${workflow.input.canonical_records}",
+            "request": "${email_hygiene.output.response.body.canonical_records}",
             "config":"${workflow.input.nameparse_config}"
           },
           "headers": {
@@ -70,7 +70,7 @@
     }
   ],
   "outputParameters": {
-    "final_canonical_records": "${workflow.input.canonical_records}"
+    "final_canonical_records": "${nameparse.output.response.body.canonical_records}"
   },
   "schemaVersion": 2
 }

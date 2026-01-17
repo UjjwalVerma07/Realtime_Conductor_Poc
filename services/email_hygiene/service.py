@@ -177,8 +177,12 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
     logger.info(f"Returning response: {response_data}")
     
     # Return JSONResponse to ensure proper formatting and immediate response
-    return JSONResponse(
-        content=response_data,
-        status_code=200,
-        headers={"Content-Type": "application/json"}
-    )
+    # return JSONResponse(
+    #     content=response_data,
+    #     status_code=200,
+    #     headers={"Content-Type": "application/json"}
+    # )
+    return {
+        "status":"EMAIL_HYGIENE_COMPLETED",
+        "canonical_records": canonical_records
+    }
