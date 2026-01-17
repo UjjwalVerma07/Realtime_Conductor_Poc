@@ -17,6 +17,12 @@ services:
       - conductor.event-queues.kafka.enabled=false  # No Kafka for realtime
       - conductor.default-event-queue.type=inmemory
       - conductor.event-processor.enabled=false
+      - workflow.http.readTimeout=600000
+      - workflow.http.connectTimeout=60000
+      - conductor.app.asyncUpdateShortRunningWorkflows=true
+      - conductor.app.asyncUpdateDelay=100
+      - conductor.http.task.readTimeout=600000
+      - conductor.http.task.connectTimeout=60000
     ports:
       - "8080:8080"  # Conductor UI/API
       - "5000:5000"

@@ -1,0 +1,49 @@
+{
+  "name": "dynamic_email_nameparse_workflow",
+  "version": 16,
+  "input": {
+    "jobId": "test-job-123",
+    "canonical_records": [
+      {
+        "job_id": "test-job-123",
+        "row_id": 1,
+        "input": {
+          "email": "alice@example.com",
+          "name": "Alice Johnson",
+          "phone": "1234567890"
+        },
+        "services": {},
+        "meta": {
+          "workflow": "dynamic_email_nameparse_workflow",
+          "status": "CREATED",
+          "created_at": "2026-01-17T10:00:00Z"
+        }
+      },
+      {
+        "job_id": "test-job-123",
+        "row_id": 2,
+        "input": {
+          "email": "bob@example.com",
+          "name": "Bob Smith",
+          "phone": "9876543210"
+        },
+        "services": {},
+        "meta": {
+          "workflow": "dynamic_email_nameparse_workflow",
+          "status": "CREATED",
+          "created_at": "2026-01-17T10:00:00Z"
+        }
+      }
+    ],
+    "nameparse_config": {
+      "nameType": "M",
+      "nameOrder": "first-name-first",
+      "delimiter": ","
+    },
+    "column_map": {
+      "email": "${workflow.input.canonical_records[*].input.email}",
+      "name": "${workflow.input.canonical_records[*].input.name}",
+      "phone": "${workflow.input.canonical_records[*].input.phone}"
+    }
+  }
+}

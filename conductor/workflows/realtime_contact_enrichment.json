@@ -1,7 +1,7 @@
 {
   "name": "dynamic_email_nameparse_workflow",
   "description": "Workflow to run dynamic services on canonical records",
-  "version": 13,
+  "version": 17,
   "inputParameters": [
     "canonical_records",
     "jobId",
@@ -15,11 +15,15 @@
       "startDelay": 0,
       "retryCount": 3,
       "retryDelaySeconds": 2,
-      "timeoutSeconds": 10,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
       "inputParameters": {
         "http_request": {
           "uri": "http://email-hygiene-realtime:9000/process",
           "method": "POST",
+            "connectionTimeOut": 3000,
+      "readTimeOut": 10000, 
           "body": {
             "header": {
               "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
@@ -40,11 +44,15 @@
       "startDelay": 0,
       "retryCount": 3,
       "retryDelaySeconds": 2,
-      "timeoutSeconds": 10,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
       "inputParameters": {
         "http_request": {
           "uri": "http://nameparse-realtime:9000/process",
           "method": "POST",
+            "connectionTimeOut": 3000,
+      "readTimeOut": 10000, 
           "body": {
             "header": {
               "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],

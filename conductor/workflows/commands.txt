@@ -1,0 +1,10 @@
+#Command for registering the workflow 
+curl -X POST http://localhost:8080/api/metadata/workflow \
+  -H "Content-Type: application/json" \
+  --data-binary @realtime_contact_enrichment.json
+
+
+#Command for submitting to ingestion-api 
+curl -X POST http://localhost:8000/submit_workflow \
+  -H "Content-Type: application/json" \
+  --data-binary @workflow_payload.json
