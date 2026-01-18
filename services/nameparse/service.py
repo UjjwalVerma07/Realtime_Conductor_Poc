@@ -52,11 +52,24 @@ def process_nameparse(data:NameParseInput,request:Request):
             name_record.update(config)
             requests_payload.append(name_record)
         except KeyError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid canonical record :name missing"
-            )
-    
+            rec.setdefault("services",{})
+            rec["services"]["nameparse"]={
+                "status":"FAILED",
+                "error":"Name Missing in Input"
+            }
+
+    if not name_record:
+        return {
+            "status": "NAME_PARSE_COMPLETED",
+            "canonical_records": canonical_records,
+            "job_summary": {
+                "service": "nameparse",
+                "success_count": 0,
+                "failure_count": len(canonical_records),
+                "total": len(canonical_records)
+            }
+        }
+
     external_payload=None
     if is_single:
         external_payload={
@@ -162,10 +175,16 @@ def process_nameparse(data:NameParseInput,request:Request):
                 status_code=500,
                 detail="External API response does not match request"
             )
+    
+    success_count=0
+    failure_count=0
+
         
     for rec,result in zip(canonical_records,api_results):
         rec.setdefault("services",{})
-        rec["services"]["nameparse"]={
+        if "output" in result:
+            success_count+=1
+            rec["services"]["nameparse"]={
                 "status":"SUCCESS",
                 "name":result.get("name"),
                 "nameType":result.get("nameType"),
@@ -175,8 +194,18 @@ def process_nameparse(data:NameParseInput,request:Request):
                 "appendage":result.get("appendage")
             }
 
-        rec.setdefault("meta",{})
-        rec["meta"]["status"]="NAMEPARSE_COMPLETED"
+            rec.setdefault("meta",{})
+            rec["meta"]["status"]="NAMEPARSE_COMPLETED"
+        else:
+            failure_count+=1
+            rec["services"]["nameparse"]={
+                "status":"FAILED",
+                "error":result.get("error","Unknown failure")
+            }
+            rec.setdefault("meta",{})
+            rec["meta"]["status"]="NAMEPARSE_FAILED"
+        
+        
         
     logger.info(f"Enriched canonical records:{json.dumps(canonical_records,indent=4)}")
     
@@ -195,7 +224,13 @@ def process_nameparse(data:NameParseInput,request:Request):
     # )
     return {
         "status":"NAMEPARSE_COMPLETED",
-        "canonical_records":canonical_records
+        "canonical_records":canonical_records,
+        "job_summary":{
+            "service":"nameparse",
+            "success_count":success_count,
+            "failure_count":failure_count,
+            "total":len(canonical_records)
+        }
     }
 
     

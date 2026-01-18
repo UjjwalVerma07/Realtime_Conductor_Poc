@@ -43,14 +43,30 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
 
     # -------- build external API payload --------
     emails = []
-    for rec in canonical_records:
+    record_index_map=[]
+    for idx, rec in enumerate(canonical_records):
         try:
             emails.append({"email": rec["input"]["email"]})
+            record_index_map.append(idx)
         except KeyError:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid canonical record: email missing"
-            )
+            rec.setdefault("services",{})
+            rec["services"]["email_hygiene"] = {
+                "status":"FAILED",
+                "error":"Email Missing in Input"
+            }
+
+
+    if not emails:
+        return {
+            "status": "EMAIL_HYGIENE_COMPLETED",
+            "canonical_records": canonical_records,
+            "job_summary": {
+                "service": "email_hygiene",
+                "success_count": 0,
+                "failure_count": len(canonical_records),
+                "total": len(canonical_records)
+            }
+        }
     external_payload=None
     if is_single:
         external_payload = {
@@ -154,16 +170,28 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
         )
 
     # -------- enrich canonical records --------
+    success_count=0
+    failure_count=0
     for rec, result in zip(canonical_records, api_results):
         rec.setdefault("services", {})
-        rec["services"]["email_hygiene"] = {
-            "status": result.get("status"),
-            "input": result.get("input"),
-            "details": result.get("details")
-        }
+        if result.get("status")=="success":
+            success_count+=1
+            rec["services"]["email_hygiene"] = {
+                "status": result.get("status"),
+                "input": result.get("input"),
+                "details": result.get("details")
+            }
+            rec.setdefault("meta", {})
+            rec["meta"]["status"] = "EMAIL_HYGIENE_COMPLETED"
+        else:
+            failure_count+=1
+            rec["services"]["email_hygiene"]={
+                "status": "failed",
+                "error": result.get("error","Unknown failure")
+            }
+            rec.setdefault("meta", {})
+            rec["meta"]["status"] = "EMAIL_HYGIENE_FAILED"
 
-        rec.setdefault("meta", {})
-        rec["meta"]["status"] = "EMAIL_HYGIENE_COMPLETED"
 
     logger.info("Email hygiene enrichment completed")
 
@@ -184,5 +212,11 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
     # )
     return {
         "status":"EMAIL_HYGIENE_COMPLETED",
-        "canonical_records": canonical_records
+        "canonical_records": canonical_records,
+        "job_summary":{
+            "service":"email_hygiene",
+            "success_count":success_count,
+            "failure_count":failure_count,
+            "total":len(canonical_records)
+        }
     }
