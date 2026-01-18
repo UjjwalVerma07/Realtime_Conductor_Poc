@@ -113,3 +113,20 @@ services:
     networks:
       - realtime-net
     restart: unless-stopped
+
+  # ----------------------------
+  # Export to CSV Service
+  # ----------------------------
+  export-to-csv:
+    build: ./services/export_to_csv
+    container_name: export-to-csv-realtime
+    ports:
+      - "9004:9000"
+    environment:
+      - CONDUCTOR_SERVER=http://conductor-server:8080/api
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    networks:
+      - realtime-net
+    restart: unless-stopped

@@ -1,7 +1,7 @@
 {
   "name": "dynamic_email_nameparse_workflow",
   "description": "Workflow to run dynamic services on canonical records",
-  "version": 6,
+  "version": 7,
   "inputParameters": [
     "canonical_records",
     "jobId",
@@ -49,24 +49,48 @@
         "http_request": {
           "uri": "http://email-hygiene-realtime:9000/process",
           "method": "POST",
-              "connectionTimeOut": 3000, 
-      "readTimeOut": 10000, 
+          "connectionTimeOut": 3000, 
+          "readTimeOut": 10000, 
           "body": {
             "header": {
               "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
               "jobId": "${workflow.input.jobId}"
             },
-            "request": "${workflow.input.canonical_records}"
+            "request": "${nameparse.output.response.body.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"
           }
         }
       }
+    },
+    {
+  "name": "export_to_csv_task",
+  "taskReferenceName": "export_to_csv",
+  "type": "HTTP",
+  "startDelay": 0,
+  "retryCount": 3,
+  "retryDelaySeconds": 2,
+  "timeoutSeconds": 60,
+  "inputParameters": {
+    "http_request": {
+      "uri": "http://export-to-csv-realtime:9000/process",
+      "method": "POST",
+      "connectionTimeOut": 3000,
+      "readTimeOut": 20000,
+      "body": {
+        "canonical_records": "${email_hygiene.output.response.body.canonical_records}",
+        "jobId": "${workflow.input.jobId}"
+      },
+      "headers": {
+        "Content-Type": "application/json"
+      }
     }
+  }
+}
   ],
   "outputParameters": {
-    "final_canonical_records": "${workflow.input.canonical_records}"
+    "final_canonical_records": "${email_hygiene.output.response.body.canonical_records}"
   },
   "schemaVersion": 2
 }
