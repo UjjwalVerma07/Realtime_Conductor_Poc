@@ -79,7 +79,7 @@ def process_export_task(task_input:ExportTaskInput):
 
     fieldnames=sorted(fieldnames)
 
-
+    logger.info(f"Writing the Data Into CSV file")
     with tempfile.NamedTemporaryFile(mode="w",newline="",encoding="utf-8",suffix=".csv",delete=False) as tmp_file:
         writer = csv.DictWriter(tmp_file, fieldnames=fieldnames)
         writer.writeheader()
@@ -88,6 +88,7 @@ def process_export_task(task_input:ExportTaskInput):
 
         temp_file_path = tmp_file.name
     
+    logger.info(f"The CSV file is created at MINIO: final_output.csv")
     object_key = f"{task_input.jobId}/final_output.csv"
     minio_manager.upload_file(temp_file_path,MINIO_BUCKET,object_key)
 
