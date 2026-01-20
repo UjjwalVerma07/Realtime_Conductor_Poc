@@ -82,7 +82,7 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
 
     logger.info(f"Calling external API: {external_payload}")
 
-    # -------- call external API or use mock --------
+    # ---------- call external API or use mock --------
     if MOCK_MODE:
         # Mock response for testing
         logger.info("Using mock mode for email hygiene")

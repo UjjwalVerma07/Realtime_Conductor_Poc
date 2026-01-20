@@ -58,9 +58,7 @@ services:
     networks:
       - realtime-net
 
-  # ----------------------------
-  # Ingestion API
-  # ----------------------------
+
   ingestion-api:
     build: ./ingestion_api
     container_name: ingestion-api-realtime
@@ -78,9 +76,7 @@ services:
     depends_on:
       - conductor-server
 
-  # ----------------------------
-  # Email Hygiene Service
-  # ----------------------------
+
   email-hygiene:
     build: ./services/email_hygiene
     container_name: email-hygiene-realtime
@@ -90,9 +86,7 @@ services:
       - realtime-net
     restart: unless-stopped
 
-  # ----------------------------
-  # NameParse Service
-  # ----------------------------
+
   nameparse:
     build: ./services/nameparse
     container_name: nameparse-realtime
@@ -102,9 +96,6 @@ services:
       - realtime-net
     restart: unless-stopped
 
-  # ----------------------------
-  # Reverse Email Service
-  # ----------------------------
   reverse-email:
     build: ./services/reverse_email
     container_name: reverse-email-realtime
@@ -114,9 +105,26 @@ services:
       - realtime-net
     restart: unless-stopped
 
-  # ----------------------------
-  # Export to CSV Service
-  # ----------------------------
+
+  ca-address-lookup-realtime:
+    build: ./services/ca_address_lookup
+    container_name: ca-address-lookup-realtime
+    ports:
+      - "9006:9000"
+    networks:
+      - realtime-net
+    restart: unless-stopped
+  
+  us-address-lookup-realtime:
+    build: ./services/us_address_lookup
+    container_name: us-address-lookup-realtime
+    ports:
+      - "9007:9000"
+    networks:
+      - realtime-net
+    restart: unless-stopped
+
+
   export-to-csv:
     build: ./services/export_to_csv
     container_name: export-to-csv-realtime

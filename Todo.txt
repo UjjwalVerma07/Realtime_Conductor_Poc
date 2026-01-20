@@ -1,0 +1,28 @@
+Things that need to be done further :- 
+1. Run this api workflow on 50 records(max) (Implemented). 
+2. Then Need to create the bundles in the form of workflows that need to run via ingestion api (different permutations and combinations). 
+3. Users will give the fields that he wants as an output , and that output will only be given as output in the csv format. 
+4. Should be able to run the servies as the Standalone also. (5 seprate workflows for each service which should be treated as bundle) . 
+5. Need to implemen the two more services which are ca_address_lookup and us_address_lookup . 
+
+
+
+Now we have 5 services that are :- 
+1. email-hygiene
+2. nameparse
+3. us_address_lookup
+4. ca_address_lookup
+5. combined_suppression 
+
+now different permuation combination for the follwong services are provided that 5th service that is combined suppression will always runs at the last
+
+
+# 1st Workflow #            # 2nd Workflow #              # 3rd Workflow #             # 4th Workflow #           # 5th Workflow #.       
+1. email_hygiene.            1. nameparse                 1. ca_address_lookup         1. us_address_lookup.      1. nameparse
+2. nameparse                 2. email_hygiene             2. us_address_lookup         2. ca_address_lookup       2. us_address_lookup
+3. us_address_lookup         3. ca_address_lookup         3. email_hygiene             3. nameparse               3. ca_address_lookup
+4. ca_address_lookup         4. us_address_lookup         4. nameparse                 4. email_hygiene           4. email_hygiene
+5. combined_suppression      5. combined_suppression.     5. combined_suppression.     5. combined_suppression.   5. combined_suppression
+
+
+Also single workflow for each service means we will be creating the workflows for follwing services alone such as email_hygiene,nameparse,us_address_lookup,ca_address_lookup

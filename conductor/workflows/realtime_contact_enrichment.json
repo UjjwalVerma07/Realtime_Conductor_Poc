@@ -67,10 +67,40 @@
           }
         }
       }
+    },
+    {
+      "name": "ca_address_lookup_task",
+      "taskReferenceName": "ca_address_lookup",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://ca-address-lookup-realtime:9000/process",
+          "method": "POST",
+          "connectionTimeOut": 3000,
+          "readTimeOut": 10000,
+          "body": {
+            "header": {
+              "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
+              "jobId": "${workflow.input.jobId}",
+              "systemId": "workbench"
+            },
+            "request": "${nameparse.output.response.body.canonical_records}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
     }
   ],
   "outputParameters": {
-    "final_canonical_records": "${nameparse.output.response.body.canonical_records}"
+    "final_canonical_records": "${ca_address_lookup.output.response.body.canonical_records}"
   },
   "schemaVersion": 2
 }
