@@ -1,16 +1,16 @@
 {
-  "name": "dynamic_email_nameparse_workflow",
-  "description": "Workflow to run dynamic services on canonical records",
-  "version": 20,
+  "name": "US_CA_Name_Email_Workflow",
+  "description": "Workflow to run us_address_lookup,ca_address_lookup,nameparse,email_hygiene services respectively on canonical records",
+  "version": 1,
   "inputParameters": [
     "canonical_records",
     "jobId",
-    "column_map"
+    "column_map" 
   ],
   "tasks": [
     {
-      "name": "email_hygiene_task",
-      "taskReferenceName": "email_hygiene",
+      "name": "us_address_lookup_task",
+      "taskReferenceName": "us_address_lookup",
       "type": "HTTP",
       "startDelay": 0,
       "retryCount": 3,
@@ -20,47 +20,17 @@
       "readTimeout": 600000,
       "inputParameters": {
         "http_request": {
-          "uri": "http://email-hygiene-realtime:9000/process",
+          "uri": "http://us-address-lookup-realtime:9000/process",
           "method": "POST",
-            "connectionTimeOut": 3000,
-      "readTimeOut": 10000, 
-          "body": {
-            "header": {
-              "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
-              "jobId": "${workflow.input.jobId}"
-            },
-            "request": "${workflow.input.canonical_records}"
-          },
-          "headers": {
-            "Content-Type": "application/json"
-          }
-        }
-      }
-    },
-    {
-      "name": "nameparse_task",
-      "taskReferenceName": "nameparse",
-      "type": "HTTP",
-      "startDelay": 0,
-      "retryCount": 3,
-      "retryDelaySeconds": 2,
-      "timeoutSeconds": 600,
-      "connectionTimeout": 60000,
-      "readTimeout": 600000,
-      "inputParameters": {
-        "http_request": {
-          "uri": "http://nameparse-realtime:9000/process",
-          "method": "POST",
-            "connectionTimeOut": 3000,
-      "readTimeOut": 10000, 
+          "connectionTimeOut": 3000,
+          "readTimeOut": 10000,
           "body": {
             "header": {
               "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
               "jobId": "${workflow.input.jobId}",
               "systemId": "workbench"
             },
-            "request": "${email_hygiene.output.response.body.canonical_records}",
-            "config":"${workflow.input.nameparse_config}"
+            "request": "${workflow.input.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"
@@ -90,7 +60,7 @@
               "jobId": "${workflow.input.jobId}",
               "systemId": "workbench"
             },
-            "request": "${nameparse.output.response.body.canonical_records}"
+            "request": "${us_address_lookup.output.response.body.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"
@@ -98,9 +68,9 @@
         }
       }
     },
-    {
-      "name": "us_address_lookup_task",
-      "taskReferenceName": "us_address_lookup",
+     {
+      "name": "nameparse_task",
+      "taskReferenceName": "nameparse",
       "type": "HTTP",
       "startDelay": 0,
       "retryCount": 3,
@@ -110,17 +80,47 @@
       "readTimeout": 600000,
       "inputParameters": {
         "http_request": {
-          "uri": "http://us-address-lookup-realtime:9000/process",
+          "uri": "http://nameparse-realtime:9000/process",
           "method": "POST",
-          "connectionTimeOut": 3000,
-          "readTimeOut": 10000,
+            "connectionTimeOut": 3000,
+      "readTimeOut": 10000, 
           "body": {
             "header": {
               "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
               "jobId": "${workflow.input.jobId}",
               "systemId": "workbench"
             },
-            "request": "${ca_address_lookup.output.response.body.canonical_records}"
+            "request": "${ca_address_lookup.output.response.body.canonical_records}",
+            "config":"${workflow.input.nameparse_config}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    },
+    {
+      "name": "email_hygiene_task",
+      "taskReferenceName": "email_hygiene",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://email-hygiene-realtime:9000/process",
+          "method": "POST",
+            "connectionTimeOut": 3000,
+      "readTimeOut": 10000, 
+          "body": {
+            "header": {
+              "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
+              "jobId": "${workflow.input.jobId}"
+            },
+            "request": "${nameparse.output.response.body.canonical_records}"
           },
           "headers": {
             "Content-Type": "application/json"
@@ -130,7 +130,7 @@
     }
   ],
   "outputParameters": {
-    "final_canonical_records": "${us_address_lookup.output.response.body.canonical_records}"
+    "final_canonical_records": "${email_hygiene.output.response.body.canonical_records}"
   },
   "schemaVersion": 2
 }

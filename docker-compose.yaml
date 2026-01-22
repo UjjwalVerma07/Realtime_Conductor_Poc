@@ -124,6 +124,14 @@ services:
       - realtime-net
     restart: unless-stopped
 
+  combined-suppression-realtime:
+    build: ./services/combined_suppression
+    container_name: combined-suppression-realtime
+    ports:
+      - "9008:9000"
+    networks:
+      - realtime-net
+    restart: unless-stopped
 
   export-to-csv:
     build: ./services/export_to_csv

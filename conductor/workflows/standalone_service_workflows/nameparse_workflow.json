@@ -1,0 +1,47 @@
+{
+  "name": "Standlalone_nameparse_Workflow",
+  "description": "Workflow to run nameparse service on canonical records",
+  "version": 1,
+  "inputParameters": [
+    "canonical_records",
+    "jobId",
+    "column_map"
+  ], 
+  "tasks": [
+    {
+      "name": "nameparse_task",
+      "taskReferenceName": "nameparse",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://nameparse-realtime:9000/process",
+          "method": "POST",
+            "connectionTimeOut": 3000,
+      "readTimeOut": 10000, 
+          "body": {
+            "header": {
+              "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
+              "jobId": "${workflow.input.jobId}",
+              "systemId": "workbench"
+            },
+            "request": "${workflow.input.canonical_records}",
+            "config":"${workflow.input.nameparse_config}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    }
+  ],
+  "outputParameters": {
+    "final_canonical_records": "${nameparse.output.response.body.canonical_records}"
+  },
+  "schemaVersion": 2
+}

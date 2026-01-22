@@ -1,20 +1,20 @@
 Things that need to be done further :- 
 1. Run this api workflow on 50 records(max) (Implemented). 
 2. Then Need to create the bundles in the form of workflows that need to run via ingestion api (different permutations and combinations). 
-3. Users will give the fields that he wants as an output , and that output will only be given as output in the csv format. 
-4. Should be able to run the servies as the Standalone also. (5 seprate workflows for each service which should be treated as bundle) . 
-5. Need to implemen the two more services which are ca_address_lookup and us_address_lookup . 
+3. Users will give the fields that he wants as an output , and that output will only be given as output in the csv format. ( Can Store what fields the user wants in the (workflow.input) as similar to what we have stored in the input parameters for the nameparse.)
+4. Should be able to run the servies as the Standalone also. (5 seprate workflows for each service which should be treated as bundle) . (Implemented)
+5. Need to implemen the two more services which are ca_address_lookup and us_address_lookup . (Implemented)
+6. Will Need to implement the combined suppression. (Will Implement Tommorrow).
 
 
-
-Now we have 5 services that are :- 
+Now we have 5 services that are :-  
 1. email-hygiene
 2. nameparse
 3. us_address_lookup
 4. ca_address_lookup
 5. combined_suppression 
 
-now different permuation combination for the follwong services are provided that 5th service that is combined suppression will always runs at the last
+now different permuation combination for the follwong services are provided that 5th service that is combined suppression will always runs at the last. (Implemented)
 
 
 # 1st Workflow #            # 2nd Workflow #              # 3rd Workflow #             # 4th Workflow #           # 5th Workflow #.       
@@ -25,4 +25,4 @@ now different permuation combination for the follwong services are provided that
 5. combined_suppression      5. combined_suppression.     5. combined_suppression.     5. combined_suppression.   5. combined_suppression
 
 
-Also single workflow for each service means we will be creating the workflows for follwing services alone such as email_hygiene,nameparse,us_address_lookup,ca_address_lookup
+Also single workflow for each service means we will be creating the workflows for follwing services alone such as email_hygiene,nameparse,us_address_lookup,ca_address_lookup(Implemented)

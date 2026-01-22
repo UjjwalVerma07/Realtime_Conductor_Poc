@@ -1,0 +1,45 @@
+{
+  "name": "Standalone_email_hygiene_Workflow",
+  "description": "Workflow to run email_hygiene service on canonical records",
+  "version": 1,
+  "inputParameters": [
+    "canonical_records",
+    "jobId",
+    "column_map"
+  ], 
+  "tasks": [
+    {
+      "name": "email_hygiene_task",
+      "taskReferenceName": "email_hygiene",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://email-hygiene-realtime:9000/process",
+          "method": "POST",
+            "connectionTimeOut": 3000,
+      "readTimeOut": 10000, 
+          "body": {
+            "header": {
+              "tags": ["API","nua","da","dps","wb","analysis","compilation","da-dps-reader-lambda","tech-showcase"],
+              "jobId": "${workflow.input.jobId}"
+            },
+            "request": "${workflow.input.canonical_records}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    }
+  ],
+  "outputParameters": {
+    "final_canonical_records": "${email_hygiene.output.response.body.canonical_records}"
+  },
+  "schemaVersion": 2
+}

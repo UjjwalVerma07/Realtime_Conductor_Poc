@@ -41,7 +41,6 @@ def process_us_address_lookup(data: US_Address_Lookup, request: Request):
     for rec in canonical_records:
         try:
             address_record = {
-                "name": rec["input"]["name"],
                 "firm": rec["input"]["firm"],
                 "address1": rec["input"]["address1"],
                 "address2": rec["input"]["address2"],
