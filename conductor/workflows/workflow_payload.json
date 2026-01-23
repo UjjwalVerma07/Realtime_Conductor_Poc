@@ -7,6 +7,39 @@
       "nameType": "M",
       "nameOrder": "first-name-first",
       "delimiter": ","
+    },
+    "combined_suppression_config":{
+      "san_id": "10422243-522243-25",
+      "orientation": "FNF",
+      "nameType": "M",
+      "parameters": {
+      "suppressionFlags": {
+        "pandALL": true,
+        "MPSIndicator": true,
+        "DTSIndicator": false,
+        "OfficialIndicator": false,
+        "BUSIndicator": true,
+        "DMIIndicator": false,
+        "RETIndicator": true,
+        "EXTIndicator": false,
+        "COLIndicator": true,
+        "MILIndicator": true,
+        "TRLIndicator": true,
+        "NURIndicator": true,
+        "CLIIndicator": false,
+        "DBAIndicator": false,
+        "ACAIndicator": true
+      },
+      "performNameAddress": false,
+      "performEmail": false,
+      "blankEmails": false,
+      "performPhone": true,
+      "performFTC": false,
+      "blankFTCPhones": false,
+      "performAtty": false,
+      "performTPS": false,
+      "performBusinessPhone": false
+    }
     }
   }
 }

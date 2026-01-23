@@ -1,12 +1,235 @@
-uverma@DA00103 Realtime_Conductor_Poc % head -50 1000876411.in
-25769803776                                       Anonymous                                         301 Church St                                                                                       Mount Calvary                                     WI                            53057                                                                                                                        
-25769803777                                       The Lena  Farley                                  Teeworker                                                                                           Drumbar                                                                         DRUMBA                                                                                                                       
-25769803778                                       Mr. R. David  Knapp Jr.                           528 East Coast Road #11-03                        Ocean Park Apts                                   Acara Blk #11-03  458969                                                        ACARA                                                                                                                        
-25769803779                                       Mr. and Mrs. Anthony  Lizotte                     Townhouse 17                                      Ayola Alabaug                                     Manila                                                                          MANILA                                                                                                                       
-25769803780                                       Mrs. Ann  Nehez                                   77 N Meade St                                                                                       Wilkes Barre                                      PA                            18702                                                                                                                        
-25769803781                                       Mr. Lawrence  Nemecek Jr.                         6925 Pinnacle Way                                                                                   Mound                                             MN                            55364                                        LARSNE@MSN.COM                                                                  
-25769803782                                       Mrs. Margaret  O'Sullivan                         Church Rd                                                                                           Cavan                                                                           CAVAN                                                                                                                        
-25769803783                                       Mrs. Helena  Baumann                              Lurbaum Strasse 9                                                                                   Baden                                                                           BADEN                                                                                                                        
-25769803784                                       Mrs. Alicia Joven  Manrique                       233 Lech Walesa Dr                                                                                  Mississauga                                       ON                            L5B3H7                                                                                                                       
-25769803785                                       Josephine  Manrique                               233 Lech Walesa Dr                                                                                  Mississauga                                       ON                            L5B3H7                                                                                                                       
-25769803786          
+
+
+For making the combined_suppression curl command san_id is the one which is required for it to run 
+
+{
+  "input": {
+    //In the input these are some standard keys;
+    "standardkeys": {
+      "keys": {
+        //This is the first key that we have
+        "linkage": {
+          "dataset": "USERDEF",
+          "partition": 0,
+          "recordid": 1
+        },
+        //This is the second key that we have that is names
+        "names": [
+          {
+            "firstName": "Kristin",
+            "lastName": "Cooper"
+          }
+        ],
+        //This is the third key that we have that is address
+        "address": [
+          {
+            "addressLine": [
+              "",
+              "1048 WASHINGTON DR"
+            ],
+            "city": "MOODY",
+            "state": "AL",
+            "zipCode": "35004",
+            "zipFour": "6125" //not requried
+          }
+        ],
+        //These are the two more keys that the user gives the input 
+        "orientation": "FNF",
+        "nameType": "I"
+      },
+      "unparsed": {}
+    },
+    //In this the sanid is the most required part that we need
+    "ftcinput": {
+      "sanid": "10422243-522243-25"
+    },
+
+
+
+    //Then followed by email and telephone
+    "email": "ANGELSORCE123@GMAIL.COM",
+    "telephone": "2056406034"
+  },
+  "parameters": {
+
+    //These are the Flags that are set by the user and by default its values are false but if set to true then they are included 
+    "suppressionFlags": {
+      "pandALL": false,
+      "MPSIndicator": true,
+      "DTSIndicator": false,
+      "OfficialIndicator": false,
+      "BUSIndicator": true,
+      "DMIIndicator": false,
+      "RETIndicator": true,
+      "EXTIndicator": false,
+      "COLIndicator": true,
+      "MILIndicator": true,
+      "TRLIndicator": true,
+      "NURIndicator": true,
+      "CLIIndicator": false,
+      "DBAIndicator": false,
+      "ACAIndicator": true,
+      "Reserved": false,
+      "DECIndicator": false,
+      "RELIndicator": false
+    },
+    //These are also the Flags that are set by the user and by default its values are false but if set to true then they are included 
+    "performNameAddress": true,
+    "performEmail": true,
+    "blankEmails": false,
+    "performPhone": true,
+    "performFTC": true,
+    "blankFTCPhones": false,
+    "performAtty": true,
+    "performTPS": true,
+    "performBusinessPhone": false
+  },
+  "output": {
+    "_CS_AUDIT_recordid": "1",
+    "_CS_AUDIT_Given_Initial": "K",
+    "_CS_AUDIT_Given_Name": "Kristin",
+    "_CS_AUDIT_Surname": "Cooper",
+    "_CS_AUDIT_Gender": "",
+    "_CS_AUDIT_Middle_Initial": "",
+    "_CS_AUDIT_zip_code": "35004",
+    "_CS_AUDIT_Street_Name": "WASHINGTON",
+    "_CS_AUDIT_Primary_Number": "      1048",
+    "_CS_AUDIT_Predirection": "",
+    "_CS_AUDIT_Street_Designator": "DR",
+    "_CS_AUDIT_Post_Direction": "",
+    "_CS_AUDIT_Unit_Type": "",
+    "_CS_AUDIT_Unit_Number": "",
+    "_CS_AUDIT_State_Abbreviation": "AL",
+    "_CS_AUDIT_Primary_Number_is_a_Box_Indicator": "N",
+    "_CS_mps_pander": "N",
+    "_CS_dts_pander": " ",
+    "_CS_off_pander": " ",
+    "_CS_bus_pander": "N",
+    "_CS_dmi_pander": " ",
+    "_CS_fds_pander": " ",
+    "_CS_rel_pander": " ",
+    "_CS_ext_pander": " ",
+    "_CS_col_pander": "N",
+    "_CS_mil_pander": "N",
+    "_CS_trl_pander": "N",
+    "_CS_ret_pander": "N",
+    "_CS_nur_pander": "N",
+    "_CS_cli_pander": " ",
+    "_CS_dba_pander": " ",
+    "_CS_aca_pander": "N",
+    "_CS_email": "ANGELSORCE123@GMAIL.COM",
+    "_CS_email_suppression": "N",
+    "_CS_refresh_date": "         ",
+    "_CS_supp_type": " ",
+    "_CS_old_master_ind": " ",
+    "_CS_ftc_match_indicator": "N",
+    "_CS_ftc_run": "T",
+    "_CS_ftc_date": "20251121",
+    "_CS_tps_telephone": "N",
+    "_CS_infousa_business_telephone": " ",
+    "_CS_attorney_general_file": "N",
+    "_CS_telephone": "2056406034"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+curl -X 'POST' \
+  'http://core-services-api.data-axle.com/v1/nua/microservices/combined_suppression' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "header": {
+    "jobId": "1000652779",
+    "systemId": "workbench",
+    "tags": [
+      "API",
+      "nua",
+      "da",
+      "dps",
+      "wb",
+      "analysis",
+      "ODBx",
+      "compilation",
+      "da-dps-reader-lambda",
+      "tech-showcase"
+    ]
+  },
+  "request": {
+    "input": {
+      "standardkeys": {
+        "keys": {
+          "linkage": {
+            "dataset": "USERDEF",
+            "partition": 0,
+            "recordid": 1452172
+          },
+          "names": [
+            {
+              "firstName": "Kristin",
+              "lastName": "Cooper"
+            }
+          ],
+          "address": [
+            {
+              "addressLine": [
+                "",
+                "1048 WASHINGTON DR"
+              ],
+              "city": "MOODY",
+              "state": "AL",
+              "zipCode": "35004"
+            }
+          ],
+          "orientation": "FNF",
+          "nameType": "M"
+        },
+        "unparsed": {}
+      },
+      "ftcinput": {
+        "sanid": ""
+      },
+      "email": {
+        "email": ""
+      },
+      "telephone": "2056406034"
+    },
+    "parameters": {
+      "suppressionFlags": {
+        "pandALL": false,
+        "MPSIndicator": true,
+        "DTSIndicator": false,
+        "OfficialIndicator": false,
+        "BUSIndicator": true,
+        "DMIIndicator": false,
+        "RETIndicator": true,
+        "EXTIndicator": false,
+        "COLIndicator": true,
+        "MILIndicator": true,
+        "TRLIndicator": true,
+        "NURIndicator": true,
+        "CLIIndicator": false,
+        "DBAIndicator": false,
+        "ACAIndicator": true
+      },
+      "performNameAddress": false,
+      "performEmail": false,
+      "blankEmails": false,
+      "performPhone": true,
+      "performFTC": false,
+      "blankFTCPhones": false,
+      "performAtty": false,
+      "performTPS": false,
+      "performBusinessPhone": false
+    }
+  }
+}'
