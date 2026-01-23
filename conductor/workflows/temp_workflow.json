@@ -1,3 +1,4 @@
+[
 {
   "name": "dynamic_email_nameparse_workflow",
   "description": "Workflow to run dynamic services on canonical records",
@@ -65,66 +66,6 @@
       }
     },
     {
-      "name": "ca_address_lookup_task",
-      "taskReferenceName": "ca_address_lookup",
-      "type": "HTTP",
-      "startDelay": 0,
-      "retryCount": 3,
-      "retryDelaySeconds": 2,
-      "timeoutSeconds": 600,
-      "connectionTimeout": 60000,
-      "readTimeout": 600000,
-      "inputParameters": {
-        "http_request": {
-          "uri": "http://ca-address-lookup-realtime:9000/process",
-          "method": "POST",
-          "connectionTimeOut": 3000,
-          "readTimeOut": 10000,
-          "body": {
-            "header": {
-              "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
-              "jobId": "${workflow.input.jobId}",
-              "systemId": "workbench"
-            },
-            "request": "${email_hygiene.output.response.body.canonical_records}"
-          },
-          "headers": {
-            "Content-Type": "application/json"
-          }
-        }
-      }
-    },
-    {
-      "name": "us_address_lookup_task",
-      "taskReferenceName": "us_address_lookup",
-      "type": "HTTP",
-      "startDelay": 0,
-      "retryCount": 3,
-      "retryDelaySeconds": 2,
-      "timeoutSeconds": 600,
-      "connectionTimeout": 60000,
-      "readTimeout": 600000,
-      "inputParameters": {
-        "http_request": {
-          "uri": "http://us-address-lookup-realtime:9000/process",
-          "method": "POST",
-          "connectionTimeOut": 3000,
-          "readTimeOut": 10000,
-          "body": {
-            "header": {
-              "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
-              "jobId": "${workflow.input.jobId}",
-              "systemId": "workbench"
-            },
-            "request": "${ca_address_lookup.output.response.body.canonical_records}"
-          },
-          "headers": {
-            "Content-Type": "application/json"
-          }
-        }
-      }
-    },
-    {
   "name": "export_to_csv_task",
   "taskReferenceName": "export_to_csv",
   "type": "HTTP",
@@ -139,7 +80,7 @@
       "connectionTimeOut": 3000,
       "readTimeOut": 20000,
       "body": {
-        "canonical_records": "${us_address_lookup.output.response.body.canonical_records}",
+        "canonical_records": "${email_hygiene.output.response.body.canonical_records}",
         "jobId": "${workflow.input.jobId}",
         "output_field_selection": "${workflow.input.output_field_selection}"
       },
@@ -151,7 +92,8 @@
 }
   ],
   "outputParameters": {
-    "final_canonical_records": "${export_to_csv.output.response.body.canonical_records}"
+    "final_canonical_records": "${email_hygiene.output.response.body.canonical_records}"
   },
   "schemaVersion": 2
 }
+]

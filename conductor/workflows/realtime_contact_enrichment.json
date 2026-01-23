@@ -158,10 +158,38 @@
           }
         }
       }
+    },
+    {
+      "name": "export_to_csv_task",
+      "taskReferenceName": "export_to_csv",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://export-to-csv:9000/process",
+          "method": "POST",
+          "connectionTimeOut": 3000,
+          "readTimeOut": 10000,
+          "body": {
+            "canonical_records": "${combined_suppression.output.response.body.canonical_records}",
+            "jobId": "${workflow.input.jobId}",
+            "output_field_selection": "${workflow.input.output_field_selection}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
     }
   ],
   "outputParameters": {
-    "final_canonical_records": "${combined_suppression.output.response.body.canonical_records}"
+    "final_canonical_records": "${combined_suppression.output.response.body.canonical_records}",
+    "export_result": "${export_to_csv.output.response.body}"
   },
   "schemaVersion": 2
 }

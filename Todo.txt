@@ -4,7 +4,7 @@ Things that need to be done further :-
 3. Users will give the fields that he wants as an output , and that output will only be given as output in the csv format. ( Can Store what fields the user wants in the (workflow.input) as similar to what we have stored in the input parameters for the nameparse.)
 4. Should be able to run the servies as the Standalone also. (5 seprate workflows for each service which should be treated as bundle) . (Implemented)
 5. Need to implemen the two more services which are ca_address_lookup and us_address_lookup . (Implemented)
-6. Will Need to implement the combined suppression. (Will Implement Tommorrow).
+6. Will Need to implement the combined suppression. (Implemented)
 
 
 Now we have 5 services that are :-  

@@ -1,26 +1,18 @@
-
-
-For making the combined_suppression curl command san_id is the one which is required for it to run 
-
 {
   "input": {
-    //In the input these are some standard keys;
     "standardkeys": {
       "keys": {
-        //This is the first key that we have
         "linkage": {
           "dataset": "USERDEF",
           "partition": 0,
           "recordid": 1
         },
-        //This is the second key that we have that is names
         "names": [
           {
             "firstName": "Kristin",
             "lastName": "Cooper"
           }
         ],
-        //This is the third key that we have that is address
         "address": [
           {
             "addressLine": [
@@ -30,29 +22,21 @@ For making the combined_suppression curl command san_id is the one which is requ
             "city": "MOODY",
             "state": "AL",
             "zipCode": "35004",
-            "zipFour": "6125" //not requried
+            "zipFour": "6125"
           }
         ],
-        //These are the two more keys that the user gives the input 
         "orientation": "FNF",
         "nameType": "I"
       },
       "unparsed": {}
     },
-    //In this the sanid is the most required part that we need
     "ftcinput": {
       "sanid": "10422243-522243-25"
     },
-
-
-
-    //Then followed by email and telephone
     "email": "ANGELSORCE123@GMAIL.COM",
     "telephone": "2056406034"
   },
   "parameters": {
-
-    //These are the Flags that are set by the user and by default its values are false but if set to true then they are included 
     "suppressionFlags": {
       "pandALL": false,
       "MPSIndicator": true,
@@ -73,7 +57,6 @@ For making the combined_suppression curl command san_id is the one which is requ
       "DECIndicator": false,
       "RELIndicator": false
     },
-    //These are also the Flags that are set by the user and by default its values are false but if set to true then they are included 
     "performNameAddress": true,
     "performEmail": true,
     "blankEmails": false,
@@ -131,105 +114,3 @@ For making the combined_suppression curl command san_id is the one which is requ
     "_CS_telephone": "2056406034"
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-curl -X 'POST' \
-  'http://core-services-api.data-axle.com/v1/nua/microservices/combined_suppression' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "header": {
-    "jobId": "1000652779",
-    "systemId": "workbench",
-    "tags": [
-      "API",
-      "nua",
-      "da",
-      "dps",
-      "wb",
-      "analysis",
-      "ODBx",
-      "compilation",
-      "da-dps-reader-lambda",
-      "tech-showcase"
-    ]
-  },
-  "request": {
-    "input": {
-      "standardkeys": {
-        "keys": {
-          "linkage": {
-            "dataset": "USERDEF",
-            "partition": 0,
-            "recordid": 1452172
-          },
-          "names": [
-            {
-              "firstName": "Kristin",
-              "lastName": "Cooper"
-            }
-          ],
-          "address": [
-            {
-              "addressLine": [
-                "",
-                "1048 WASHINGTON DR"
-              ],
-              "city": "MOODY",
-              "state": "AL",
-              "zipCode": "35004"
-            }
-          ],
-          "orientation": "FNF",
-          "nameType": "M"
-        },
-        "unparsed": {}
-      },
-      "ftcinput": {
-        "sanid": ""
-      },
-      "email": {
-        "email": ""
-      },
-      "telephone": "2056406034"
-    },
-    "parameters": {
-      "suppressionFlags": {
-        "pandALL": false,
-        "MPSIndicator": true,
-        "DTSIndicator": false,
-        "OfficialIndicator": false,
-        "BUSIndicator": true,
-        "DMIIndicator": false,
-        "RETIndicator": true,
-        "EXTIndicator": false,
-        "COLIndicator": true,
-        "MILIndicator": true,
-        "TRLIndicator": true,
-        "NURIndicator": true,
-        "CLIIndicator": false,
-        "DBAIndicator": false,
-        "ACAIndicator": true
-      },
-      "performNameAddress": false,
-      "performEmail": false,
-      "blankEmails": false,
-      "performPhone": true,
-      "performFTC": false,
-      "blankFTCPhones": false,
-      "performAtty": false,
-      "performTPS": false,
-      "performBusinessPhone": false
-    }
-  }
-}'
