@@ -37,11 +37,10 @@ class EmailHygieneInput(BaseModel):
 def process_email_hygiene(data: EmailHygieneInput, request: Request):
     logger.info(f"Received request from {request.client.host}")
 
-    records = data.request
+    records = data.request #in this we are getting the cannonical records
     is_single = isinstance(records, dict)
     canonical_records = [records] if is_single else records
 
-    # -------- build external API payload --------
     emails = []
     record_index_map=[]
     for idx, rec in enumerate(canonical_records):

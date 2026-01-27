@@ -23,7 +23,7 @@
           "uri": "http://nameparse-realtime:9000/process",
           "method": "POST",
             "connectionTimeOut": 3000,
-      "readTimeOut": 10000, 
+            "readTimeOut": 10000, 
           "body": {
             "header": {
               "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
@@ -121,6 +121,64 @@
               "systemId": "workbench"
             },
             "request": "${ca_address_lookup.output.response.body.canonical_records}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    },
+    {
+      "name": "combined_suppression_task",
+      "taskReferenceName": "combined_suppression",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://combined-suppression-realtime:9000/process",
+          "method": "POST",
+          "connectionTimeOut": 3000,
+          "readTimeOut": 10000,
+          "body": {
+            "header": {
+              "tags": ["API","nua","da","dps","wb","analysis","ODBx","compilation","da-dps-reader-lambda","tech-showcase"],
+              "jobId": "${workflow.input.jobId}",
+              "systemId": "workbench"
+            },
+            "request": "${us_address_lookup.output.response.body.canonical_records}",
+            "combined_suppression_config": "${workflow.input.combined_suppression_config}"
+          },
+          "headers": {
+            "Content-Type": "application/json"
+          }
+        }
+      }
+    },
+    {
+      "name": "export_to_csv_task",
+      "taskReferenceName": "export_to_csv",
+      "type": "HTTP",
+      "startDelay": 0,
+      "retryCount": 3,
+      "retryDelaySeconds": 2,
+      "timeoutSeconds": 600,
+      "connectionTimeout": 60000,
+      "readTimeout": 600000,
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://export-to-csv:9000/process",
+          "method": "POST",
+          "connectionTimeOut": 3000,
+          "readTimeOut": 10000,
+          "body": {
+            "canonical_records": "${combined_suppression.output.response.body.canonical_records}",
+            "jobId": "${workflow.input.jobId}",
+            "output_field_selection": "${workflow.input.output_field_selection}"
           },
           "headers": {
             "Content-Type": "application/json"

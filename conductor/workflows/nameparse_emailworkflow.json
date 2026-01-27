@@ -1,7 +1,7 @@
 {
-  "name": "dynamic_email_nameparse_workflow",
+  "name": "Nameparse_email_ca_us_export_workflow",
   "description": "Workflow to run dynamic services on canonical records",
-  "version": 8,
+  "version": 1,
   "inputParameters": [
     "canonical_records",
     "jobId",
