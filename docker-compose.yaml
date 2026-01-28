@@ -4,6 +4,7 @@ networks:
 
 volumes:
   minio_data:
+  ingestion_pgdata:
 
 services:
   conductor-server:
@@ -54,6 +55,23 @@ services:
       start_period: 60s
     networks:
       - realtime-net
+  
+  postgres:
+    image: postgres:14
+    container_name: ingestion-postgres
+    environment:
+      POSTGRES_DB: ingestion_db
+      POSTGRES_USER: ingestion_user
+      POSTGRES_PASSWORD: ingestion_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - ingestion_pgdata:/var/lib/postgresql/data
+      
+    networks:
+      - realtime-net
+    restart: unless-stopped
+
 
 
   ingestion-api:
@@ -66,12 +84,18 @@ services:
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
-
+      - DATABASE_URL=postgresql+psycopg2://ingestion_user:ingestion_pass@postgres:5432/ingestion_db
+    volumes:
+      - ./conductor/workflows/bundeled_workflows:/app/workflows/bundled:ro
+      - ./conductor/workflows/standalone_service_workflows:/app/workflows/standalone:ro 
     networks:
       - realtime-net
     restart: unless-stopped
     depends_on:
-      - conductor-server
+      conductor-server:
+        condition: service_healthy
+      postgres:
+        condition: service_started
 
 
   email-hygiene:

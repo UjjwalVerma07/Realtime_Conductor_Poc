@@ -9,15 +9,41 @@ from datetime import datetime, timezone
 import uuid
 from minio_utils import MinIOManager
 import json
+from db.database import engine
+from db.models import Base
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from db.database import get_db
+from db.models import WorkflowBundle
+from db.schemas import WorkflowBundleResponse
+from workflow_registration import register_workflows_on_startup
+
+
+Base.metadata.create_all(bind=engine)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 service = FastAPI(title="Dynamic Ingestion API")
 
+
+@service.on_event("startup")
+async def startup_event():
+    """Run workflow registration on application startup."""
+    logger.info("Ingestion API starting up...")
+    
+    # Register workflows automatically
+    success = register_workflows_on_startup()
+    
+    if success:
+        logger.info("All workflows registered successfully")
+    else:
+        logger.warning("Some workflows failed to register - check logs above")
+    
+    logger.info("Ingestion API startup completed")
+
 CONDUCTOR_URL = "http://conductor-server:8080/api"
 
 minio_manager = MinIOManager()
-
 
 class WorkflowRequest(BaseModel):
     workflowName: str
@@ -25,6 +51,20 @@ class WorkflowRequest(BaseModel):
     csvMinioUri: Optional[str] = None
     csvContent: Optional[str] = None
     workflowInput: Optional[Dict[str, Any]] = {} 
+
+class WorkflowBundleCreate(BaseModel):
+    bundle_name: str
+    workflow_name: str
+    workflow_version: int
+    description: Optional[str] = None
+    is_active: bool = True
+
+class WorkflowBundleUpdate(BaseModel):
+    bundle_name: Optional[str] = None
+    workflow_name: Optional[str] = None
+    workflow_version: Optional[int] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
 
 def read_csv(minio_uri: Optional[str], csv_content: Optional[str]) -> pd.DataFrame:
     if minio_uri:
@@ -98,7 +138,6 @@ def submit_workflow(workflow_name: str, workflow_input: Dict[str, Any], workflow
     }
     logger.info(f"Submitting workflow to Conductor: {url} with payload keys: {list(payload['input'].keys())}")
     response = requests.post(url, json=payload)
-    
     logger.info(f"Conductor raw response status: {response.status_code}, body: {response.text!r}")
     
     if response.status_code not in [200, 202]:
@@ -134,3 +173,98 @@ def submit_workflow_endpoint(req: WorkflowRequest):
     except Exception as e:
         logger.error(f"Error submitting workflow: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+#This is the get api that we are gonna expose to list the active workflows that are available to us
+@service.get(
+    "/workflows",
+    response_model=List[WorkflowBundleResponse]
+)
+def list_available_workflows(
+    include_inactive: bool = False,
+    db: Session = Depends(get_db)
+):
+    query = db.query(WorkflowBundle)
+
+    if not include_inactive:
+        query = query.filter(WorkflowBundle.is_active == True)
+
+    workflows = query.order_by(WorkflowBundle.bundle_name).all()
+    return workflows
+
+#This it the get api that we are gonna expose to lisst the active workflows by bundleKey that are available to us.
+@service.get("/workflows/{bundle_id}",response_model=WorkflowBundleResponse)
+def get_workflow_by_bundle_key(bundle_id:int,db:Session=Depends(get_db)):
+    workflow=db.query(WorkflowBundle).filter(WorkflowBundle.id==bundle_id).first()
+
+    if not workflow:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Workflow bundle '{bundle_id}' not found"
+        )
+    
+    if not workflow.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workflow bundle '{bundle_id}' is inactive"
+        )
+    
+    return workflow
+
+
+@service.post("/bundles")
+def create_workflow_bundle(payload:WorkflowBundleCreate,db:Session=Depends(get_db)):
+    existing=(
+        db.query(WorkflowBundle).filter(WorkflowBundle.bundle_name==payload.bundle_name).first()
+    )
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workflow bundle '{payload.bundle_name}' already exists"
+        )
+    
+    workflow_bundle=WorkflowBundle(
+        bundle_name=payload.bundle_name,
+        workflow_name=payload.workflow_name,
+        workflow_version=payload.workflow_version,
+        description=payload.description,
+        is_active=payload.is_active
+    )
+
+    db.add(workflow_bundle)
+    db.commit()
+    db.refresh(workflow_bundle)
+    return workflow_bundle
+
+@service.put("/bundles/{bundle_id}")
+def update_workflow_bundle(bundle_id:int,payload:WorkflowBundleUpdate,db:Session=Depends(get_db)):
+    workflow=(
+        db.query(WorkflowBundle).filter(WorkflowBundle.id==bundle_id).first()
+    )
+
+    if not workflow:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Workflow bundle with ID '{bundle_id}' not found"
+        )
+
+    if payload.bundle_name is not None:
+        workflow.bundle_name = payload.bundle_name
+
+    if payload.workflow_name is not None:
+        workflow.workflow_name = payload.workflow_name
+
+    if payload.workflow_version is not None:
+        workflow.workflow_version = payload.workflow_version
+
+    if payload.description is not None:
+        workflow.description = payload.description
+    
+    if payload.is_active is not None:
+        workflow.is_active = payload.is_active
+
+    db.commit()
+    db.refresh(workflow)
+    return workflow

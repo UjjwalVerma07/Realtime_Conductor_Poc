@@ -1,6 +1,6 @@
 {
-  "name": "CA_US_Email_Name_Workflow",
-  "description": "Workflow to run ca_address_lookup,us_address_lookup,email_hygiene,nameparse services respectively on canonical records",
+  "name": "CA_US_Email_Name_CombinedSuppression_Workflow",
+  "description": "Workflow to run ca_address_lookup,us_address_lookup,email_hygiene,nameparse services followed by combined suppression respectively on canonical records",
   "version": 1,
   "inputParameters": [
     "canonical_records",
