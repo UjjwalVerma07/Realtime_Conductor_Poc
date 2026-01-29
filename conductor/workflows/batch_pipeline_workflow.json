@@ -1,0 +1,61 @@
+{
+  "name": "batch_pipeline_workflow",
+  "description": "Workflow to execute batch pipeline processing via batch pipeline service",
+  "version": 1,
+  "tasks": [
+    {
+      "name": "call_batch_pipeline_service",
+      "taskReferenceName": "call_batch_pipeline_service",
+      "inputParameters": {
+        "http_request": {
+          "uri": "http://batch-pipeline:9000/execute-batch",
+          "method": "POST",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "body": {
+            "pipeline_run_id": "${workflow.input.pipeline_run_id}",
+            "request_id": "${workflow.input.request_id}",
+            "input_path_prefix": "${workflow.input.input_path_prefix}",
+            "output_path_prefix": "${workflow.input.output_path_prefix}",
+            "report_path_prefix": "${workflow.input.report_path_prefix}"
+          },
+          "connectionTimeOut": 60000,
+          "readTimeOut": 300000
+        }
+      },
+      "type": "HTTP",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": []
+    }
+  ],
+  "inputParameters": [
+    "pipeline_run_id",
+    "input_path_prefix", 
+    "request_id",
+    "output_path_prefix",
+    "report_path_prefix"
+  ],
+  "outputParameters": {
+    "pipeline_run_id": "${workflow.input.pipeline_run_id}",
+    "batch_service_response": "${call_batch_pipeline_service.output.response.body}",
+    "workbench_job_id": "${call_batch_pipeline_service.output.response.body.workbench_job_id}",
+    "status": "${call_batch_pipeline_service.output.response.body.status}"
+  },
+  "failureWorkflow": "",
+  "schemaVersion": 2,
+  "restartable": true,
+  "workflowStatusListenerEnabled": false,
+  "ownerEmail": "batch-pipeline@company.com",
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 1800,
+  "variables": {},
+  "inputTemplate": {}
+}

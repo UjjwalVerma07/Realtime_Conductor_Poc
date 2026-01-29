@@ -62,6 +62,14 @@ def register_workflows_on_startup():
             workflow_files.append(file_path)
             logger.info(f"Found workflow file: {file_path.name} in {workflows_dir.name}")
     
+    # Add batch pipeline workflow from the main workflows directory
+    batch_workflow_path = Path("/app/workflows/batch_pipeline_workflow.json")
+    if batch_workflow_path.exists():
+        workflow_files.append(batch_workflow_path)
+        logger.info(f"Found batch pipeline workflow: {batch_workflow_path.name}")
+    else:
+        logger.warning("Batch pipeline workflow not found - this may cause batch processing to fail")
+    
     if not workflow_files:
         logger.warning("No workflow files found to register")
         return False

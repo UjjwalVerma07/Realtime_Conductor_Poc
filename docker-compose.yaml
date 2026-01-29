@@ -88,6 +88,7 @@ services:
     volumes:
       - ./conductor/workflows/bundeled_workflows:/app/workflows/bundled:ro
       - ./conductor/workflows/standalone_service_workflows:/app/workflows/standalone:ro 
+      - ./conductor/workflows/batch_pipeline_workflow.json:/app/workflows/batch_pipeline_workflow.json:ro 
     networks:
       - realtime-net
     restart: unless-stopped
@@ -164,6 +165,35 @@ services:
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
+    networks:
+      - realtime-net
+    restart: unless-stopped
+
+  batch-pipeline:
+    build: ./services/batch_pipeline
+    container_name: batch-pipeline
+    ports:
+      - "9009:9000"
+    environment:
+      - WORKBENCH_API_BASE_URL=http://workbench-api:8080
+      - DATABASE_API_BASE_URL=http://ingestion-api:8000
+    networks:
+      - realtime-net
+    restart: unless-stopped
+    depends_on:
+      - ingestion-api
+  
+  batch-monitor-worker:
+    build: ./services/batch_monitor_worker
+    container_name: batch-monitor-worker
+    ports:
+      - "9010:9000"
+    environment:
+      - CONDUCTOR_SERVER=http://conductor-server:8080/api
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - DATABASE_URL=postgresql+psycopg2://ingestion_user:ingestion_pass@postgres:5432/ingestion_db
     networks:
       - realtime-net
     restart: unless-stopped

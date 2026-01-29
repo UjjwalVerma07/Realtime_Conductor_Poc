@@ -10,12 +10,12 @@ import uuid
 from minio_utils import MinIOManager
 import json
 from db.database import engine
-from db.models import Base
+from db.models import Base, PipelineRunStatus
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from db.database import get_db
-from db.models import WorkflowBundle
-from db.schemas import WorkflowBundleResponse
+from db.models import WorkflowBundle,PipelineRun,Pipeline,PipelineMode
+from db.schemas import WorkflowBundleResponse,PipelineResponse,PipelineRunResponse
 from workflow_registration import register_workflows_on_startup
 
 
@@ -59,12 +59,30 @@ class WorkflowBundleCreate(BaseModel):
     description: Optional[str] = None
     is_active: bool = True
 
+class PipelineBundleCreate(BaseModel):
+    workflow_name:str
+    mode:str
+    input_layout:Optional[int]=None
+    output_layout:Optional[int]=None
+    request_id:Optional[str]=None
+    storage_type:Optional[str]=None
+    storage_bucket_name:Optional[str]=None
+    storage_input_path_prefix:Optional[str]=None
+    storage_output_path_prefix:Optional[str]=None
+
 class WorkflowBundleUpdate(BaseModel):
     bundle_name: Optional[str] = None
     workflow_name: Optional[str] = None
     workflow_version: Optional[int] = None
     description: Optional[str] = None
     is_active: Optional[bool] = None
+
+class PipelineRunRequest(BaseModel):
+    pipeline_id:int
+    input_path_prefix:Optional[str]=None
+    output_path_prefix:Optional[str]=None
+    report_path_prefix:Optional[str]=None
+    realtime_workflow_request:Optional[WorkflowRequest]=None
 
 def read_csv(minio_uri: Optional[str], csv_content: Optional[str]) -> pd.DataFrame:
     if minio_uri:
@@ -151,7 +169,7 @@ def submit_workflow(workflow_name: str, workflow_input: Dict[str, Any], workflow
         return {"raw_response": response.text, "status_code": response.status_code}
 
 
-@service.post("/submit_workflow")
+# @service.post("/submit_workflow")
 def submit_workflow_endpoint(req: WorkflowRequest):
     try:
         df = read_csv(req.csvMinioUri, req.csvContent)
@@ -238,6 +256,36 @@ def create_workflow_bundle(payload:WorkflowBundleCreate,db:Session=Depends(get_d
     db.refresh(workflow_bundle)
     return workflow_bundle
 
+@service.post("/pipelines")
+def create_pipeline_bundle(payload:PipelineBundleCreate,db:Session=Depends(get_db)):
+    existing=(
+        db.query(Pipeline).filter(Pipeline.workflow_name==payload.workflow_name).first()
+    )
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Pipeline with workflow name '{payload.workflow_name}' already exists"
+        )
+    
+    pipeline=Pipeline(
+        workflow_name=payload.workflow_name,
+        mode=payload.mode,
+        input_layout=payload.input_layout,
+        output_layout=payload.output_layout,
+        request_id=payload.request_id,
+        storage_type=payload.storage_type,
+        storage_bucket_name=payload.storage_bucket_name,
+        storage_input_path_prefix=payload.storage_input_path_prefix,
+        storage_output_path_prefix=payload.storage_output_path_prefix
+    )
+
+    db.add(pipeline)
+    db.commit()
+    db.refresh(pipeline)
+    return pipeline
+
+
 @service.put("/bundles/{bundle_id}")
 def update_workflow_bundle(bundle_id:int,payload:WorkflowBundleUpdate,db:Session=Depends(get_db)):
     workflow=(
@@ -268,3 +316,125 @@ def update_workflow_bundle(bundle_id:int,payload:WorkflowBundleUpdate,db:Session
     db.commit()
     db.refresh(workflow)
     return workflow
+
+
+#List all Pipelines
+@service.get("/pipelines",response_model=List[PipelineResponse])
+def list_pipelines(include_inactive: bool = False,db: Session = Depends(get_db)):
+    query=db.query(Pipeline)
+    if not include_inactive:
+        query=query.filter(Pipeline.is_active==True)
+    pipelines=query.order_by(Pipeline.id).all()
+    return pipelines
+
+#List Pipelineby id
+@service.get("/pipelines/{pipeline_id}", response_model=PipelineResponse)
+def get_pipeline_by_id(pipeline_id: int, db: Session = Depends(get_db)):
+    pipeline = db.query(Pipeline).filter(Pipeline.id == pipeline_id).first()
+    if not pipeline:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Pipeline with ID '{pipeline_id}' not found"
+        )
+    return pipeline
+
+
+#Post endpoint to create a pipeline run and submit it to the conductor workflow
+@service.post("/pipeline-run", response_model=PipelineRunResponse)
+def create_pipeline_run(payload: PipelineRunRequest, db: Session = Depends(get_db)):
+    #Fetch the pipeline info
+    pipeline = db.query(Pipeline).filter(Pipeline.id == payload.pipeline_id).first()
+
+    if not pipeline:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Pipeline with ID '{payload.pipeline_id}' not found"
+        )
+
+    # Create a new pipeline run
+    pipeline_run = PipelineRun(
+        pipeline_id=pipeline.id,
+        user_storage_input_path_prefix=payload.input_path_prefix,
+        user_storage_output_path_prefix=payload.output_path_prefix,
+        user_storage_report_path_prefix=payload.report_path_prefix
+    )
+
+    db.add(pipeline_run)
+    db.commit()
+    db.refresh(pipeline_run)
+    logger.info(f"Pipeline run created with id {pipeline_run.id} for pipeline {pipeline.id}")
+
+    if pipeline.mode == PipelineMode.BATCH:
+        # Call batch pipeline service
+        batch_payload = {
+            "pipeline_run_id": pipeline_run.id,
+            "request_id": pipeline.request_id,
+            "input_path_prefix": payload.input_path_prefix,
+            "output_path_prefix": payload.output_path_prefix,
+            "report_path_prefix": payload.report_path_prefix
+        }
+        
+        # Submit to Conductor workflow that will call batch pipeline service
+        conductor_payload = {
+            "name": "batch_pipeline_workflow",
+            "input": batch_payload
+        }
+
+        try:
+            conductor_url = f"{CONDUCTOR_URL}/workflow"
+            response = requests.post(conductor_url, json=conductor_payload)
+            
+            if response.status_code not in [200, 202]:
+                logger.error(f"Failed to submit batch workflow: {response.text}")
+                pipeline_run.status = PipelineRunStatus.FAILED
+                pipeline_run.error_message = f"Conductor submission failed: {response.text}"
+                db.commit()
+                raise HTTPException(status_code=500, detail="Failed to submit batch workflow")
+            
+            # Update status to SUBMITTED
+            pipeline_run.status = PipelineRunStatus.SUBMITTED
+            pipeline_run.started_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(pipeline_run)
+            
+            logger.info(f"Batch pipeline submitted successfully for pipeline_run_id: {pipeline_run.id}")
+            
+        except Exception as e:
+            logger.error(f"Error submitting batch pipeline: {e}")
+            pipeline_run.status = PipelineRunStatus.FAILED
+            pipeline_run.error_message = str(e)
+            db.commit()
+            raise HTTPException(status_code=500, detail=f"Failed to submit batch pipeline: {str(e)}")
+
+    elif pipeline.mode == PipelineMode.REALTIME:
+        if not payload.realtime_workflow_request:
+            raise HTTPException(
+                status_code=400,
+                detail="realtime_workflow_request is required for REALTIME pipelines"
+            )
+        
+        # Execute realtime workflow
+        try:
+            realtime_response = submit_workflow_endpoint(payload.realtime_workflow_request)
+            
+            # Update pipeline run with realtime workflow info
+            pipeline_run.status = PipelineRunStatus.SUBMITTED
+            pipeline_run.workbench_job_id = realtime_response.get("workflowId")
+            pipeline_run.started_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(pipeline_run)
+            
+            logger.info(f"Realtime workflow submitted successfully for pipeline_run_id: {pipeline_run.id}")
+            
+        except Exception as e:
+            logger.error(f"Error submitting realtime workflow: {e}")
+            pipeline_run.status = PipelineRunStatus.FAILED
+            pipeline_run.error_message = str(e)
+            db.commit()
+            raise HTTPException(status_code=500, detail=f"Failed to submit realtime workflow: {str(e)}")
+
+    return pipeline_run
+    
+    
+
+
