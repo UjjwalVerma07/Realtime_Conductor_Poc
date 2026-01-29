@@ -1,0 +1,152 @@
+{
+  "pipeline_id": 1,
+  "realtime_workflow_request": {
+    "workflowName": "Email_Name_US_CA_CombinedSuppression_Workflow",
+    "workflowVersion": 1,
+    "csvMinioUri": "minio://test-ingestion/final_50_entries_data.csv",
+    "workflowInput": {
+      "nameparse_config": {
+        "nameType": "M",
+        "nameOrder": "first-name-first",
+        "delimiter": ","
+      },
+      "combined_suppression_config": {
+        "san_id": "10422243-522243-25",
+        "orientation": "FNF",
+        "nameType": "M",
+        "parameters": {
+          "suppressionFlags": {
+            "pandALL": true,
+            "MPSIndicator": true,
+            "DTSIndicator": false,
+            "OfficialIndicator": false,
+            "BUSIndicator": true,
+            "DMIIndicator": false,
+            "RETIndicator": true,
+            "EXTIndicator": false,
+            "COLIndicator": true,
+            "MILIndicator": true,
+            "TRLIndicator": true,
+            "NURIndicator": true,
+            "CLIIndicator": false,
+            "DBAIndicator": false,
+            "ACAIndicator": true
+          },
+          "performNameAddress": false,
+          "performEmail": false,
+          "blankEmails": false,
+          "performPhone": true,
+          "performFTC": false,
+          "blankFTCPhones": false,
+          "performAtty": false,
+          "performTPS": false,
+          "performBusinessPhone": false
+        }
+      },
+      "output_field_selection": {
+        "email_hygiene": {
+          "enabled": true,
+          "fields": {
+            "details.reference": true,
+            "details.indicator": true,
+            "details.email": false,
+            "status": true,
+            "input": false
+          }
+        },
+        "nameparse": {
+          "enabled": true,
+          "fields": {
+            "output.person1_firstname": true,
+            "output.person1_lastname": true,
+            "output.person1_middlename": true,
+            "output.person1_gender": true,
+            "output.person1_maturitytitle": true,
+            "output.person1_salutation": false,
+            "output.person1_title": false,
+            "output.family_name": false,
+            "output.business_name": false,
+            "appendage.given1": true,
+            "appendage.surname1": true,
+            "appendage.middle1": false,
+            "appendage.gender1": true,
+            "appendage.surname_suffix1": true,
+            "appendage.title1": false,
+            "appendage.professional_title1": false,
+            "name": true,
+            "nameType": true
+          }
+        },
+        "us_address_lookup": {
+          "enabled": true,
+          "fields": {
+            "output.address1": true,
+            "output.address2": true,
+            "output.city": true,
+            "output.state": true,
+            "output.zipcode": true,
+            "output.zipfour": true,
+            "output.countyname": false,
+            "output.carrierroute": false,
+            "output.errorstatus": true,
+            "output.statuscode": true,
+            "output.primaryaddress": true,
+            "output.secondaryaddress": false
+          }
+        },
+        "ca_address_lookup": {
+          "enabled": true,
+          "fields": {
+            "output.CACE_IFIRM": true,
+            "output.CACE_PRIM_RANGE": true,
+            "output.CACE_PRIM_NAME": true,
+            "output.CACE_SUFFIX": true,
+            "output.CACE_DIR": true,
+            "output.CACE_SEC_RANGE": true,
+            "output.CACE_CITY": true,
+            "output.CACE_PROVINCE": true,
+            "output.CACE_POSTAL": true,
+            "output.CACE_ERROR_CODE": true,
+            "output.CACE_STAT_CODE": true,
+            "output.CACE_CATEGORY": false,
+            "output.CACE_REC_TYPE": false
+          }
+        },
+        "combined_suppression": {
+          "enabled": true,
+          "fields": {
+            "output._CS_AUDIT_Given_Name": true,
+            "output._CS_AUDIT_Surname": true,
+            "output._CS_AUDIT_Gender": false,
+            "output._CS_AUDIT_zip_code": true,
+            "output._CS_AUDIT_Street_Name": true,
+            "output._CS_AUDIT_Primary_Number": true,
+            "output._CS_AUDIT_Street_Designator": true,
+            "output._CS_AUDIT_State_Abbreviation": true,
+            "output._CS_mps_pander": true,
+            "output._CS_dts_pander": false,
+            "output._CS_off_pander": false,
+            "output._CS_bus_pander": true,
+            "output._CS_dmi_pander": false,
+            "output._CS_ret_pander": true,
+            "output._CS_ext_pander": false,
+            "output._CS_col_pander": true,
+            "output._CS_mil_pander": true,
+            "output._CS_trl_pander": true,
+            "output._CS_nur_pander": true,
+            "output._CS_cli_pander": false,
+            "output._CS_dba_pander": false,
+            "output._CS_aca_pander": true,
+            "output._CS_email": true,
+            "output._CS_email_suppression": true,
+            "output._CS_ftc_match_indicator": true,
+            "output._CS_ftc_run": true,
+            "output._CS_tps_telephone": true,
+            "output._CS_attorney_general_file": true,
+            "output._CS_telephone": true
+          }
+        }
+      }
+    }
+  }
+}

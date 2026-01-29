@@ -1,0 +1,20 @@
+{
+  "header": {
+    "tags": ["test"],
+    "jobId": "test-123"
+  },
+  "request": [
+    {
+      "job_id": "test-123",
+      "row_id": 1,
+      "input": {
+        "email": "test@example.com"
+      },
+      "services": {},
+      "meta": {
+        "workflow": "test",
+        "status": "CREATED"
+      }
+    }
+  ]
+}

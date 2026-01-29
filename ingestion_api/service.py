@@ -50,6 +50,7 @@ class WorkflowRequest(BaseModel):
     workflowVersion: Optional[int] = 1
     csvMinioUri: Optional[str] = None
     csvContent: Optional[str] = None
+    jsonData: Optional[List[Dict[str, Any]]] = None
     workflowInput: Optional[Dict[str, Any]] = {} 
 
 class WorkflowBundleCreate(BaseModel):
@@ -65,6 +66,7 @@ class PipelineBundleCreate(BaseModel):
     input_layout:Optional[int]=None
     output_layout:Optional[int]=None
     request_id:Optional[str]=None
+    description:Optional[str]=None
     storage_type:Optional[str]=None
     storage_bucket_name:Optional[str]=None
     storage_input_path_prefix:Optional[str]=None
@@ -84,7 +86,7 @@ class PipelineRunRequest(BaseModel):
     report_path_prefix:Optional[str]=None
     realtime_workflow_request:Optional[WorkflowRequest]=None
 
-def read_csv(minio_uri: Optional[str], csv_content: Optional[str]) -> pd.DataFrame:
+def read_csv(minio_uri: Optional[str], csv_content: Optional[str], json_data: Optional[List[Dict[str, Any]]] = None) -> pd.DataFrame:
     if minio_uri:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
             local_path = tmp_file.name
@@ -95,8 +97,14 @@ def read_csv(minio_uri: Optional[str], csv_content: Optional[str]) -> pd.DataFra
     elif csv_content:
         from io import StringIO
         df = pd.read_csv(StringIO(csv_content), dtype=str, keep_default_na=False, na_values=[])
+    elif json_data:
+        # Convert JSON array to DataFrame
+        df = pd.DataFrame(json_data)
+        # Convert all columns to string type to match CSV behavior
+        df = df.astype(str)
+        logger.info(f"Created DataFrame from JSON data with {len(df)} records and columns: {list(df.columns)}")
     else:
-        raise ValueError("Either minio_uri or csv_content must be provided")
+        raise ValueError("Either minio_uri, csv_content, or json_data must be provided")
     
     df = df.fillna('')
     
@@ -165,14 +173,15 @@ def submit_workflow(workflow_name: str, workflow_input: Dict[str, Any], workflow
     try:
         return response.json()
     except ValueError:
-        logger.warning("Conductor response is not JSON, returning raw text")
-        return {"raw_response": response.text, "status_code": response.status_code}
+        logger.warning("Conductor response is not JSON, treating as workflow ID")
+        # If response is plain text, assume it's the workflow ID
+        workflow_id = response.text.strip().strip('"')
+        return {"workflowId": workflow_id, "status_code": response.status_code}
 
 
-# @service.post("/submit_workflow")
 def submit_workflow_endpoint(req: WorkflowRequest):
     try:
-        df = read_csv(req.csvMinioUri, req.csvContent)
+        df = read_csv(req.csvMinioUri, req.csvContent, req.jsonData)
         logger.info(f"CSV read successfully with {len(df)} records and columns: {list(df.columns)}")
 
         workflow_input = prepare_dynamic_workflow_input(req.workflowInput, df)
@@ -274,6 +283,7 @@ def create_pipeline_bundle(payload:PipelineBundleCreate,db:Session=Depends(get_d
         input_layout=payload.input_layout,
         output_layout=payload.output_layout,
         request_id=payload.request_id,
+        description=payload.description,
         storage_type=payload.storage_type,
         storage_bucket_name=payload.storage_bucket_name,
         storage_input_path_prefix=payload.storage_input_path_prefix,
@@ -338,6 +348,12 @@ def get_pipeline_by_id(pipeline_id: int, db: Session = Depends(get_db)):
         )
     return pipeline
 
+@service.get("/pipeline-run", response_model=List[PipelineRunResponse])
+def get_pipeline_runs(include_inactive: bool = False, db: Session = Depends(get_db)):
+    query = db.query(PipelineRun)
+    pipeline_runs = query.order_by(PipelineRun.id).all()
+    return pipeline_runs
+
 
 #Post endpoint to create a pipeline run and submit it to the conductor workflow
 @service.post("/pipeline-run", response_model=PipelineRunResponse)
@@ -365,6 +381,9 @@ def create_pipeline_run(payload: PipelineRunRequest, db: Session = Depends(get_d
     logger.info(f"Pipeline run created with id {pipeline_run.id} for pipeline {pipeline.id}")
 
     if pipeline.mode == PipelineMode.BATCH:
+        # TODO: Call batch pipeline service later
+        # Commenting out conductor submission for now - just return success
+        """
         # Call batch pipeline service
         batch_payload = {
             "pipeline_run_id": pipeline_run.id,
@@ -405,6 +424,15 @@ def create_pipeline_run(payload: PipelineRunRequest, db: Session = Depends(get_d
             pipeline_run.error_message = str(e)
             db.commit()
             raise HTTPException(status_code=500, detail=f"Failed to submit batch pipeline: {str(e)}")
+        """
+        
+        # For now, just mark as submitted without calling conductor
+        pipeline_run.status = PipelineRunStatus.SUBMITTED
+        pipeline_run.started_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(pipeline_run)
+        
+        logger.info(f"Batch pipeline job submitted (conductor call commented out) for pipeline_run_id: {pipeline_run.id}")
 
     elif pipeline.mode == PipelineMode.REALTIME:
         if not payload.realtime_workflow_request:
@@ -419,7 +447,7 @@ def create_pipeline_run(payload: PipelineRunRequest, db: Session = Depends(get_d
             
             # Update pipeline run with realtime workflow info
             pipeline_run.status = PipelineRunStatus.SUBMITTED
-            pipeline_run.workbench_job_id = realtime_response.get("workflowId")
+            # pipeline_run.workbench_job_id = realtime_response.get("workflowId")
             pipeline_run.started_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(pipeline_run)
@@ -434,7 +462,3 @@ def create_pipeline_run(payload: PipelineRunRequest, db: Session = Depends(get_d
             raise HTTPException(status_code=500, detail=f"Failed to submit realtime workflow: {str(e)}")
 
     return pipeline_run
-    
-    
-
-

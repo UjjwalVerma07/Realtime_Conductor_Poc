@@ -66,6 +66,9 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
                 "total": len(canonical_records)
             }
         }
+    logger.info(f"Processing emails: count={len(emails)}, is_single={is_single}")
+    logger.info(f"Emails to process: {emails}")
+    
     external_payload=None
     if is_single:
         external_payload = {
@@ -161,20 +164,33 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
             time.sleep(RETRY_DELAY)
 
     api_results = [api_response] if is_single else api_response
+    
+    # Handle case where external API returns single object for single request
+    if not is_single and len(emails) == 1 and not isinstance(api_response, list):
+        api_results = [api_response]
+    
+    logger.info(f"API processing: is_single={is_single}, emails_count={len(emails)}, api_results_count={len(api_results) if isinstance(api_results, list) else 'not_list'}")
+    logger.info(f"API results type: {type(api_results)}, content: {api_results}")
 
-    if len(api_results) != len(canonical_records):
+    if len(api_results) != len(emails):
+        logger.error(f"Size mismatch: emails={len(emails)}, api_results={len(api_results)}")
         raise HTTPException(
             status_code=500,
-            detail="Response size mismatch from email hygiene API"
+            detail=f"Response size mismatch from email hygiene API: expected {len(emails)} responses for {len(emails)} email requests, got {len(api_results)}"
         )
 
     # -------- enrich canonical records --------
-    success_count=0
-    failure_count=0
-    for rec, result in zip(canonical_records, api_results):
+    success_count = 0
+    failure_count = 0
+    
+    # Process API results and map them back to the correct canonical records
+    for i, result in enumerate(api_results):
+        record_idx = record_index_map[i]  # Get the original canonical record index
+        rec = canonical_records[record_idx]
+        
         rec.setdefault("services", {})
-        if result.get("status")=="success":
-            success_count+=1
+        if result.get("status") == "success":
+            success_count += 1
             rec["services"]["email_hygiene"] = {
                 "status": result.get("status"),
                 "input": result.get("input"),
@@ -183,13 +199,18 @@ def process_email_hygiene(data: EmailHygieneInput, request: Request):
             rec.setdefault("meta", {})
             rec["meta"]["status"] = "EMAIL_HYGIENE_COMPLETED"
         else:
-            failure_count+=1
-            rec["services"]["email_hygiene"]={
+            failure_count += 1
+            rec["services"]["email_hygiene"] = {
                 "status": "failed",
-                "error": result.get("error","Unknown failure")
+                "error": result.get("error", "Unknown failure")
             }
             rec.setdefault("meta", {})
             rec["meta"]["status"] = "EMAIL_HYGIENE_FAILED"
+    
+    # Count records that already failed due to missing emails
+    for rec in canonical_records:
+        if rec.get("services", {}).get("email_hygiene", {}).get("status") == "FAILED":
+            failure_count += 1
 
 
     logger.info("Email hygiene enrichment completed")

@@ -41,7 +41,7 @@ class Pipeline(Base):
     output_layout=Column(Integer,nullable=True)
 
     request_id=Column(String(255),nullable=True)
-
+    description=Column(String(255),nullable=True)
     storage_type=Column(String(255),nullable=True)
     storage_bucket_name=Column(String(255),nullable=True)
 
